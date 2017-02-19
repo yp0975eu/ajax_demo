@@ -6,24 +6,6 @@
 </div>
 
 <div id="place_list">
-
-{{#each places}}
-
-  <div id="{{this.id}}">
-
-    <span class="placename">{{this.name}}</span>
-    <label class="visited_label" for="{{this.id}}_is_visited">Visited?</label>
-    {{#if this.visited}}
-      <input class="visited" id="{{this.id}}_is_visited" type="checkbox" checked />
-    {{else}}
-      <input class="visited" id="{{this.id}}_is_visited" type="checkbox" />
-    {{/if}}
-
-    <button id="{{this.id}}_delete" class="delete">Delete?</button>
-
-  </div>
-{{/each}}
-
 </div>
 
 <P>Check a box to mark place as visited </P>

@@ -14,7 +14,11 @@ a {
   word-wrap: break-word;
 }
 
-.visited, .visited_label {
+.visited_label {
+  background-color: lightcyan;
+}
+
+.controls {
   background-color: aqua;
 }
 
@@ -22,3 +26,10 @@ a {
   padding-bottom: 5px;
   padding-top: 5px;
 }
+
+.controls, .visited_label, .placename {
+  padding: 5px;
+  margin:1px;
+
+}
+
