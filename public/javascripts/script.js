@@ -107,13 +107,15 @@ function addNewPlace(placename){
     url:"/add",
     data: { "name" : placename }
   }).done(function(data){
-
+    console.log("data: ", data);
     console.log('POST complete');
-
+    if ( data.status !== "success"){
+      return;
+    }
     $('#new_place').val('');        // Clear input text box
 
     var parent = $('#place_list');
-    addPlace(data, parent);
+    addPlace(data.place, parent);
 
     // Update listeners
     var new_checkbox_id = '#' +data.id + '_is_visited';
@@ -153,12 +155,15 @@ function deletePlace(id) {
     url: "/delete",
     data: { 'id': id }
   }).done(function (data) {
-    console.log('DELETE complete');
-    // Select div containing this item, and remove from page
-    var selector_id = '#' + data.id + "";
-    $(selector_id).fadeOut(function(){
-      $(this).remove();
-    });
+    if (data.status == "success"){
+      console.log('DELETE complete');
+      // Select div containing this item, and remove from page
+      var selector_id = '#' + data.place.id + "";
+      $(selector_id).fadeOut(function(){
+        $(this).remove();
+      });
+    }
+
   }).fail(function (error) {
     console.log('DELETE error');
     console.log(error);

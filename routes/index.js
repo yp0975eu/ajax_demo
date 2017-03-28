@@ -1,92 +1,121 @@
 var express = require('express');
 var router = express.Router();
 
-
 // "Database". Names of places, and whether the user has visited it or not.
 
-var places = [
-{id: "1", name: "Rome", visited: true},
-{id: "2", name: "New York", visited: false},
-{id: "3", name: "Tokyo", visited: false}
-];
-var counter = places.length;
-
+//var places = [
+//    {id: "1", name: "Rome", lowerCaseName: "rome", visited: true},
+//    {id: "2", name: "New York", lowerCaseName: "new york", visited: false},
+//    {id: "3", name: "Tokyo", lowerCaseName: "tokyo", visited: false}
+//];
+/*
+ db.locations.insertMany(
+     [
+         {id: "1", name: "Rome", lowerCaseName: "rome", visited: true},
+         {id: "2", name: "New York", lowerCaseName: "new york", visited: false},
+         {id: "3", name: "Tokyo", lowerCaseName: "tokyo", visited: false}
+     ]
+ )
+*/
 
 /* GET home page. */
-router.get('/', function(req, res) {
-  res.render('index', { title: 'Travel Wish List', places : places });
+router.get('/', function (req, res, next) {
+
+    req.db.collection('locations').find().toArray(function(err, docs){
+        if (err) {
+            return next(err)
+        }
+        res.render('index', {title: 'Travel Wish List', places: docs});
+
+    });
 });
 
 
 /* GET all items home page. */
-router.get('/all', function(req, res) {
-  res.json(places);
+router.get('/all', function (req, res) {
+    req.db.collection('locations').find().toArray(function(err, docs){
+        if (err) {
+            return next(err)
+        }
+        res.json(docs);
+    });
 });
 
 
 /* POST - add a new location */
-router.post('/add', function(req, res) {
+router.post('/add', function (req, res) {
+    var name = req.body.name;
+    var lowerCaseName = req.lowerCaseWords(name);
 
-  var name = req.body.name;
-  var place = { 'id': ++counter + "" , 'name': name, 'visited': false };
+    // Check if we have this one already
+    req.db.collection("locations").count({"lowerCaseName": lowerCaseName}, function(err, count){
+        if(err){
+            return err;
+        }
+        if ( count !== 0 ) {
+            return res.json({"status": "fail", "message":"duplicate entry"});
+        }
+        // insert
+        req.db.collection('locations').count(function (err, count) {
+            if (err) {
+                return err;
+            }
+            var place = {'id': ++count + "", 'name': name, 'lowerCaseName': lowerCaseName, 'visited': false};
 
-  places.push(place);
+            req.db.collection('locations').insertOne(place, function (err) {
+                if (err) {
+                    return err;
+                }
+                req.db.collection('locations').find(function (err, places) {
+                    if (err) {
+                        return err;
+                    }
 
-  console.log('After POST, the places list is');
-  console.log(places);
+                    console.log('After POST, the places list is');
 
-  res.status(201);      // Created
-  res.json(place);      // Send new object data back as JSON, if needed.
+                    res.status(201);      // Created
+                    res.json({"status": "success", "place":place});      // Send new object data back as JSON, if needed.
 
-  // TODO may want to check if place already in list and don't add.
+                })
+            });
+        });
+
+    });
 
 });
 
 
 /* PUT - update whether a place has been visited or not */
-router.put('/update', function(req, res){
+router.put('/update', function (req, res) {
 
-  var id = req.body.id;
-  var visited = req.body.visited == "true";  // all the body parameters are strings
+    var id = req.body.id;
+    var visited = req.body.visited == "true";  // all the body parameters are strings
 
-  for (var i = 0 ; i < places.length ; i++) {
-    var place = places[i];
-    if (place.id == id) {
-      place.visited = visited;
-      places[i] = place;
-    }
-  }
+    req.db.collection('locations').update({'id':id}, {$set:{'visited':visited}}, function(err, doc){
+        if (err ){
+            return err;
+        }
 
-  console.log('After PUT, the places list is');
-  console.log(places);
-
-  res.json(place);
+        console.log('After PUT, the places list is');
+        res.json({"status":"success"});
+    });
 
 });
 
 
-router.delete('/delete', function(req, res){
+router.delete('/delete', function (req, res) {
 
-  var place_id = req.body.id;
-  console.log(place_id);
+    var place_id = req.body.id;
 
-  for (var i = 0 ; i < places.length ; i++) {
-    var place = places[i];
-    if (place.id == place_id) {
-      places.splice(i, 1);  //Delete the element at this position
-      res.json(place);
-      break;
-    }
-  }
+    req.db.collection('locations').findOneAndDelete({"id":place_id},function (err, doc) {
+        if (err) {
+            return err;
+        }
 
-  console.log('After DELETE, the places list is');
-  console.log(places);
-
-  res.status(200);
-  res.end();
+        res.status(200);
+        res.json({"status":"success", "place": doc.value});
+    });
 
 });
-
-
 
 module.exports = router;
